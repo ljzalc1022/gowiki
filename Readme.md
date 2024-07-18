@@ -13,6 +13,6 @@ Basically a demo of the `net/http` of Go.
 ## build
 
 ```bash
-$ go build wiki.go
+$ go build -o bin/
 $ ./wiki
 ```
