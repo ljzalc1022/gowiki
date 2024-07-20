@@ -4,7 +4,13 @@ A simple wiki website following https://go.dev/doc/articles/wiki/
 
 Basically a demo of the `net/http` of Go.
 
-## interfaces
+## URLs
+
+### FrontPage
+
+`/` is redirected to `/view/FrontPage`
+
+### Interfaces
 
 - `/view/xxx` - view page xxx (jump to `edit/xxx` if not found)
 - `/edit/xxx` - edit page xxx

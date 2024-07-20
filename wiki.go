@@ -87,12 +87,19 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
+const homePage = "/view/FrontPage"
+
+func homePageHandler(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, homePage, http.StatusFound)
+}
+
 func main() {
 	// p1 := &Page{Title: "TestPage", Body: []byte("This is a sample Page.")}
 	// p1.save()
 	// p2, _ := loadPage("TestPage")
 	// fmt.Println(string(p2.Body))
 
+	http.HandleFunc("/{$}", homePageHandler)
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
