@@ -16,6 +16,10 @@ Basically a demo of the `net/http` of Go.
 - `/edit/xxx` - edit page xxx
 - `/save/xxx` - save the page xxx and jump to `/view/xxx`
 
+## Syntax
+
+`[PageName]` can be used to refer to PageName
+
 ## build
 
 ```bash

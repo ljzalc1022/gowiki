@@ -1,12 +1,13 @@
 package main
 
 import (
-	"errors"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 )
 
 type Page struct {
@@ -28,24 +29,33 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+var titlePattern = "[a-zA-Z0-9]+"
 
-func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
-	m := validPath.FindStringSubmatch(r.URL.Path)
-	if m == nil {
-		http.NotFound(w, r)
-		return "", errors.New("invalid Page Title")
-	}
-	return m[2], nil
-}
+var pageLink = regexp.MustCompile("[" + titlePattern + "]")
+var validPath = regexp.MustCompile("^/(edit|save|view)/(" + titlePattern + ")$")
 
 var templates = template.Must(template.ParseFiles("templates/edit.html", "templates/view.html"))
 
-func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
+func replaceHyperLink(pattern []byte) []byte {
+	pageName := string(pattern[1 : len(pattern)-1])
+	re := fmt.Sprintf("<a href=%q>%v</a>", "/view/"+pageName, pageName)
+	return []byte(re)
+}
+
+func renderTemplate(w http.ResponseWriter, tmpl string, p *Page, replace bool) {
+	var renderedPage strings.Builder
+	err := templates.ExecuteTemplate(&renderedPage, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	renderedPageBytes := []byte(renderedPage.String())
+
+	// replacing the [PageName] with <a></a>
+	if replace {
+		renderedPageBytes = pageLink.ReplaceAllFunc(renderedPageBytes, replaceHyperLink)
+	}
+
+	fmt.Fprintf(w, "%s", renderedPageBytes)
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -54,7 +64,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
-	renderTemplate(w, "view", p)
+	renderTemplate(w, "view", p, true)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -62,7 +72,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if err != nil {
 		p = &Page{Title: title}
 	}
-	renderTemplate(w, "edit", p)
+	renderTemplate(w, "edit", p, false)
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
